@@ -20,6 +20,7 @@ class MealRepository extends ServiceEntityRepository
     private $languageRepository;
     private $locale;
     private $errors = [];
+    private $meta = [];
 
     public function __construct(ManagerRegistry $registry, LanguageRepository $languageRepository)
     {
@@ -29,6 +30,12 @@ class MealRepository extends ServiceEntityRepository
 
     public function filter($filter) {
         $dbQuery = $this->createQueryBuilder('m');
+        $this->meta = [
+            'currentPage' => 1,
+            'totalItems' => (int)$this->getNumberOfMeals(),
+            'itemsPerPage' => (int)$this->getNumberOfMeals(),
+            'totalPages' => 1
+        ];
         foreach ($filter as $query=>$value) {
             if($query == 'category') {
                 if($value == 'null') {
@@ -44,9 +51,10 @@ class MealRepository extends ServiceEntityRepository
                 }
 
             if($query == 'tags') {
+                $explodedTagIds = explode(',', $value);
                 $dbQuery->join('m.tags', 't');
                 $dbQuery->Andwhere('t.id IN (:tag_ids)');
-                $dbQuery->setParameter('tag_ids', $value);
+                $dbQuery->setParameter('tag_ids', $explodedTagIds);
             }
 
             if($query == 'with') {
@@ -58,15 +66,14 @@ class MealRepository extends ServiceEntityRepository
             }
 
             if($query == 'diff_time') {
-                $parsedDate = strtotime($value);
-                if(!$parsedDate || $value <= 0) {
+                if(!is_int($value) && $value<=0) {
                     $this->errors = [
                         'status:'=> 'error',
-                        'code:'=> 'invalid date format',
+                        'code:'=> 'invalid unix timestamp format',
                         'message:'=> 'You entered wrong query type for diff_time!'
                     ];
                 } else {
-                    $date = new DateTime($value);
+                    $date = gmdate('Y-m-d H:i:s', $value);
                     $dbQuery->join('m.statuses', 's');
                     $dbQuery->Andwhere('s.createdAt > :date');
                     $dbQuery->setParameter('date', $date);
@@ -82,6 +89,12 @@ class MealRepository extends ServiceEntityRepository
                     ];
                 } else {
                     $dbQuery->setMaxResults($value);
+                    $this->meta = [
+                        'currentPage' => 1,
+                        'totalItems' => (int)$this->getNumberOfMeals(),
+                        'itemsPerPage' => (int)$value,
+                        'totalPages' => (int)ceil($this->getNumberOfMeals()/$value)
+                    ];
                 }
             }
 
@@ -92,6 +105,12 @@ class MealRepository extends ServiceEntityRepository
                     $offset = $dbQuery->getMaxResults()*($value-1);
                 }
                 $dbQuery->setFirstResult($offset);
+                $this->meta = [
+                    'currentPage' => (int)$value,
+                    'totalItems' => (int)$this->getNumberOfMeals(),
+                    'itemsPerPage' => (int)$dbQuery->getMaxResults(),
+                    'totalPages' => (int)ceil($this->getNumberOfMeals()/$dbQuery->getMaxResults())
+                ];
             }
 
             if($query == 'lang') {
@@ -104,37 +123,24 @@ class MealRepository extends ServiceEntityRepository
                 } else {
                     $this->locale = $value;
                     $dbQuery->join('m.translations', 'rl');
+                    $dbQuery->distinct(true);
                     $dbQuery->Andwhere('rl.locale = :language');
+                    $dbQuery->Andwhere('m.id = rl.object');
                     $dbQuery->setParameter('language', $value);
                 }
             }
         }
 
         $query = $dbQuery->getQuery();
-
         $query->setHint(TranslatableListener::HINT_TRANSLATABLE_LOCALE, $this->locale);
         $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER,
             'Gedmo\\Translatable\\Query\\TreeWalker\\TranslationWalker');
-
         return $query->getArrayResult();
-    }
-
-    public function findAllAsArray() {
-        $query = $this->createQueryBuilder('m')
-            ->join('m.category', 'c')
-            ->join('m.ingredients', 'i')
-            ->join('m.tags', 't')
-            ->addSelect('c')
-            ->addSelect('i')
-            ->addSelect('t');
-
-        return $query->getQuery()->getArrayResult();
     }
 
     public function getNumberOfMeals() {
         $query = $this->createQueryBuilder('m')
             ->select('count(m.id)');
-
         return $query->getQuery()->getSingleScalarResult();
     }
 
@@ -144,5 +150,13 @@ class MealRepository extends ServiceEntityRepository
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMeta(): array
+    {
+        return $this->meta;
     }
 }
