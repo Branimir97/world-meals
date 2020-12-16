@@ -123,25 +123,24 @@ class MealRepository extends ServiceEntityRepository
                 } else {
                     $this->locale = $value;
                     $dbQuery->join('m.translations', 'rl');
+                    $dbQuery->distinct(true);
                     $dbQuery->Andwhere('rl.locale = :language');
+                    $dbQuery->Andwhere('m.id = rl.object');
                     $dbQuery->setParameter('language', $value);
                 }
             }
         }
 
         $query = $dbQuery->getQuery();
-
         $query->setHint(TranslatableListener::HINT_TRANSLATABLE_LOCALE, $this->locale);
         $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER,
             'Gedmo\\Translatable\\Query\\TreeWalker\\TranslationWalker');
-
         return $query->getArrayResult();
     }
 
     public function getNumberOfMeals() {
         $query = $this->createQueryBuilder('m')
             ->select('count(m.id)');
-
         return $query->getQuery()->getSingleScalarResult();
     }
 
