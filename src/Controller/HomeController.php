@@ -58,7 +58,7 @@ class HomeController extends AbstractController
             ];
         } else {
             $response = [
-                //'meta' => $meta,
+                'meta' => $mealRepository->getMeta(),
                 'data' => $data
             ];
         }
