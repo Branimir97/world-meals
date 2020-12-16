@@ -44,9 +44,10 @@ class MealRepository extends ServiceEntityRepository
                 }
 
             if($query == 'tags') {
+                $explodedTagIds = explode(',', $value);
                 $dbQuery->join('m.tags', 't');
                 $dbQuery->Andwhere('t.id IN (:tag_ids)');
-                $dbQuery->setParameter('tag_ids', $value);
+                $dbQuery->setParameter('tag_ids', $explodedTagIds);
             }
 
             if($query == 'with') {
