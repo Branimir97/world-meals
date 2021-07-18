@@ -7,8 +7,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
+use App\Repository\MealRepository;
 
-// * @Gedmo\SoftDeleteable(fieldName="deletedAt", timeAware=false)
 
 /**
  * @ORM\Entity(repositoryClass=MealRepository::class)
