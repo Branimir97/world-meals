@@ -7,7 +7,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\Constraints\Json;
 
 /**
  * Class HomeController
@@ -21,7 +20,8 @@ class HomeController extends AbstractController
      * @param MealRepository $mealRepository
      * @return JsonResponse
      */
-    public function searchAction(Request $request, MealRepository $mealRepository): JsonResponse
+    public function searchAction(Request $request,
+                                 MealRepository $mealRepository): JsonResponse
     {
         if($request->query->count() !== 0) {
 

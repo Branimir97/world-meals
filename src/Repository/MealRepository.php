@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\Meal;
-use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
@@ -22,7 +21,8 @@ class MealRepository extends ServiceEntityRepository
     private $errors = [];
     private $meta = [];
 
-    public function __construct(ManagerRegistry $registry, LanguageRepository $languageRepository)
+    public function __construct(ManagerRegistry $registry,
+                                LanguageRepository $languageRepository)
     {
         parent::__construct($registry, Meal::class);
         $this->languageRepository = $languageRepository;
@@ -130,7 +130,6 @@ class MealRepository extends ServiceEntityRepository
                 }
             }
         }
-
         $query = $dbQuery->getQuery();
         $query->setHint(TranslatableListener::HINT_TRANSLATABLE_LOCALE, $this->locale);
         $query->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER,

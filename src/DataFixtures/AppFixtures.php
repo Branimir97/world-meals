@@ -14,10 +14,6 @@ use Faker\Factory;
 
 class AppFixtures extends Fixture
 {
-    private $categories = array();
-    private $ingredients = array();
-    private $tags = array();
-
     public function load(ObjectManager $manager)
     {
         $faker = Factory::create();
